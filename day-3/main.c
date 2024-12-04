@@ -5,14 +5,12 @@
 #define BUFFER_SIZE 2
 #define MULTIPLIER_SIZE 12
 
-void parse_mul(char *mul) {
+int parse_mul(char *mul) {
   char num1[4];
   char num2[4];
-
   int nums_found = 0;
   int x = 0;
   int last_index = 0;
-
   // get num1
   while (nums_found != 1) {
     if (mul[x] == ',') {
@@ -24,10 +22,8 @@ void parse_mul(char *mul) {
     }
     x++;
   }
-
   nums_found = 0;
   x = 0;
-
   // get num2
   while (nums_found != 1) {
     if (mul[last_index + x] == ')') {
@@ -38,8 +34,88 @@ void parse_mul(char *mul) {
     }
     x++;
   }
+  int number1 = atoi(num1);
+  int number2 = atoi(num2);
+  printf("num1: %d, num2: %d\n\n", number1, number2);
+  return number1 * number2;
+}
 
-  printf("num1: %s, num2: %s\n\n", num1, num2);
+void mul_delim_gen(char *buffer, int *buffer_char_count, int *comma_set,
+                   int *run_started, char *mul, char letter, int index) {
+  if (buffer[*buffer_char_count] != letter) {
+    *comma_set = 0;
+    *run_started = 0;
+    memset(mul, 0, sizeof(*mul));
+  } else {
+    mul[index] = letter;
+    *run_started += 1;
+  }
+}
+
+int mul_lex_gen(char *buffer, int *buffer_char_count, int *comma_set,
+                int *number_set_after_comma, int *run_started, char *mul,
+                int *result, int index) {
+  if (buffer[*buffer_char_count] == '1' || buffer[*buffer_char_count] == '2' ||
+      buffer[*buffer_char_count] == '3' || buffer[*buffer_char_count] == '4' ||
+      buffer[*buffer_char_count] == '5' || buffer[*buffer_char_count] == '6' ||
+      buffer[*buffer_char_count] == '7' || buffer[*buffer_char_count] == '8' ||
+      buffer[*buffer_char_count] == '9' || buffer[*buffer_char_count] == '0' ||
+      buffer[*buffer_char_count] == ')' || buffer[*buffer_char_count] == ',') {
+    if (buffer[*buffer_char_count] == ',') {
+      if (*comma_set == 1) {
+        *number_set_after_comma = 0;
+        *run_started = 0;
+        *comma_set = 0;
+        memset(mul, 0, sizeof(*mul));
+        *buffer_char_count += 1;
+        return 0;
+      }
+      *comma_set = 1;
+    }
+    if (buffer[*buffer_char_count] == ')') {
+      if (*number_set_after_comma == 0) {
+        *number_set_after_comma = 0;
+        *comma_set = 0;
+        *run_started = 0;
+        memset(mul, 0, sizeof(*mul));
+        *buffer_char_count += 1;
+        return 0;
+      }
+      if (*comma_set == 0) {
+        *number_set_after_comma = 0;
+        *comma_set = 0;
+        *run_started = 0;
+        memset(mul, 0, sizeof(*mul));
+        *buffer_char_count += 1;
+        return 0;
+      }
+      mul[index] = buffer[*buffer_char_count];
+      for (int x = 0; x < MULTIPLIER_SIZE; x++) {
+        if (mul[x] == '(') {
+          *result += parse_mul(&mul[x + 1]);
+        }
+      }
+      *number_set_after_comma = 0;
+      *comma_set = 0;
+      *run_started = 0;
+      memset(mul, 0, sizeof(*mul));
+      *buffer_char_count += 1;
+      return 0;
+    }
+    if ((buffer[*buffer_char_count] != ')' ||
+         buffer[*buffer_char_count] != ',') &&
+        *comma_set == 1) {
+      *number_set_after_comma = 1;
+    }
+    mul[index] = buffer[*buffer_char_count];
+    *run_started += 1;
+    return 1;
+  }
+  *number_set_after_comma = 0;
+  *comma_set = 0;
+  *run_started = 0;
+  memset(mul, 0, sizeof(*mul));
+  return 0;
 }
 
 int main() {
@@ -52,6 +128,7 @@ int main() {
   int run_started = 0;
   int comma_set = 0;
   int number_set_after_comma = 0;
+  int result = 0;
 
   memset(buffer, 0, sizeof(buffer));
 
@@ -80,38 +157,19 @@ int main() {
           buffer_char_count += 1;
           continue;
         }
-
         if (run_started > 0) {
           switch (run_started) {
           case 1:
-            if (buffer[buffer_char_count] != 'u') {
-              comma_set = 0;
-              run_started = 0;
-              memset(mul, 0, sizeof(mul));
-            } else {
-              mul[1] = 'u';
-              run_started += 1;
-            }
+            mul_delim_gen(buffer, &buffer_char_count, &comma_set, &run_started,
+                          mul, 'u', 1);
             break;
           case 2:
-            if (buffer[buffer_char_count] != 'l') {
-              comma_set = 0;
-              run_started = 0;
-              memset(mul, 0, sizeof(mul));
-            } else {
-              mul[2] = 'l';
-              run_started += 1;
-            }
+            mul_delim_gen(buffer, &buffer_char_count, &comma_set, &run_started,
+                          mul, 'l', 2);
             break;
           case 3:
-            if (buffer[buffer_char_count] != '(') {
-              comma_set = 0;
-              run_started = 0;
-              memset(mul, 0, sizeof(mul));
-            } else {
-              mul[3] = '(';
-              run_started += 1;
-            }
+            mul_delim_gen(buffer, &buffer_char_count, &comma_set, &run_started,
+                          mul, '(', 3);
             break;
           case 4:
             if (buffer[buffer_char_count] == '1' ||
@@ -158,374 +216,38 @@ int main() {
             }
             break;
           case 6:
-            if (buffer[buffer_char_count] == '1' ||
-                buffer[buffer_char_count] == '2' ||
-                buffer[buffer_char_count] == '3' ||
-                buffer[buffer_char_count] == '4' ||
-                buffer[buffer_char_count] == '5' ||
-                buffer[buffer_char_count] == '6' ||
-                buffer[buffer_char_count] == '7' ||
-                buffer[buffer_char_count] == '8' ||
-                buffer[buffer_char_count] == '9' ||
-                buffer[buffer_char_count] == '0' ||
-                buffer[buffer_char_count] == ')' ||
-                buffer[buffer_char_count] == ',') {
-
-              if (buffer[buffer_char_count] == ',') {
-                if (comma_set == 1) {
-                  run_started = 0;
-                  comma_set = 0;
-                  number_set_after_comma = 0;
-                  memset(mul, 0, sizeof(mul));
-                  buffer_char_count += 1;
-                  continue;
-                }
-                comma_set = 1;
-              }
-
-              if (buffer[buffer_char_count] == ')') {
-                if (number_set_after_comma == 0) {
-                  comma_set = 0;
-                  run_started = 0;
-                  number_set_after_comma = 0;
-                  memset(mul, 0, sizeof(mul));
-                  buffer_char_count += 1;
-                  continue;
-                }
-
-                if (comma_set == 0) {
-                  comma_set = 0;
-                  run_started = 0;
-                  number_set_after_comma = 0;
-                  memset(mul, 0, sizeof(mul));
-                  buffer_char_count += 1;
-                  continue;
-                }
-
-                mul[6] = buffer[buffer_char_count];
-                for (int x = 0; x < MULTIPLIER_SIZE; x++) {
-                  if (mul[x] == '(') {
-                    parse_mul(&mul[x + 1]);
-                  }
-                }
-
-                number_set_after_comma = 0;
-                comma_set = 0;
-                run_started = 0;
-                memset(mul, 0, sizeof(mul));
-                buffer_char_count += 1;
-                continue;
-              }
-
-              if ((buffer[buffer_char_count] != ')' ||
-                   buffer[buffer_char_count] != ',') &&
-                  comma_set == 1) {
-                number_set_after_comma = 1;
-              }
-
-              mul[6] = buffer[buffer_char_count];
-              run_started += 1;
-            } else {
-              number_set_after_comma = 0;
-              comma_set = 0;
-              run_started = 0;
-              memset(mul, 0, sizeof(mul));
+            if (mul_lex_gen(buffer, &buffer_char_count, &comma_set,
+                            &number_set_after_comma, &run_started, mul, &result,
+                            6) == 0) {
+              continue;
             }
             break;
           case 7:
-            if (buffer[buffer_char_count] == '1' ||
-                buffer[buffer_char_count] == '2' ||
-                buffer[buffer_char_count] == '3' ||
-                buffer[buffer_char_count] == '4' ||
-                buffer[buffer_char_count] == '5' ||
-                buffer[buffer_char_count] == '6' ||
-                buffer[buffer_char_count] == '7' ||
-                buffer[buffer_char_count] == '8' ||
-                buffer[buffer_char_count] == '9' ||
-                buffer[buffer_char_count] == '0' ||
-                buffer[buffer_char_count] == ')' ||
-                buffer[buffer_char_count] == ',') {
-
-              if (buffer[buffer_char_count] == ',') {
-                if (comma_set == 1) {
-                  number_set_after_comma = 0;
-                  run_started = 0;
-                  comma_set = 0;
-                  memset(mul, 0, sizeof(mul));
-                  buffer_char_count += 1;
-                  continue;
-                }
-                comma_set = 1;
-              }
-
-              if (buffer[buffer_char_count] == ')') {
-                if (number_set_after_comma == 0) {
-                  number_set_after_comma = 0;
-                  comma_set = 0;
-                  run_started = 0;
-                  memset(mul, 0, sizeof(mul));
-                  buffer_char_count += 1;
-                  continue;
-                }
-                if (comma_set == 0) {
-                  number_set_after_comma = 0;
-                  comma_set = 0;
-                  run_started = 0;
-                  memset(mul, 0, sizeof(mul));
-                  buffer_char_count += 1;
-                  continue;
-                }
-
-                mul[7] = buffer[buffer_char_count];
-                for (int x = 0; x < MULTIPLIER_SIZE; x++) {
-                  if (mul[x] == '(') {
-                    parse_mul(&mul[x + 1]);
-                  }
-                }
-
-                number_set_after_comma = 0;
-                comma_set = 0;
-                run_started = 0;
-                memset(mul, 0, sizeof(mul));
-                buffer_char_count += 1;
-                continue;
-              }
-
-              if ((buffer[buffer_char_count] != ')' ||
-                   buffer[buffer_char_count] != ',') &&
-                  comma_set == 1) {
-                number_set_after_comma = 1;
-              }
-
-              mul[7] = buffer[buffer_char_count];
-              run_started += 1;
-            } else {
-              number_set_after_comma = 0;
-              comma_set = 0;
-              run_started = 0;
-              memset(mul, 0, sizeof(mul));
+            if (mul_lex_gen(buffer, &buffer_char_count, &comma_set,
+                            &number_set_after_comma, &run_started, mul, &result,
+                            7) == 0) {
+              continue;
             }
             break;
           case 8:
-            if (buffer[buffer_char_count] == '1' ||
-                buffer[buffer_char_count] == '2' ||
-                buffer[buffer_char_count] == '3' ||
-                buffer[buffer_char_count] == '4' ||
-                buffer[buffer_char_count] == '5' ||
-                buffer[buffer_char_count] == '6' ||
-                buffer[buffer_char_count] == '7' ||
-                buffer[buffer_char_count] == '8' ||
-                buffer[buffer_char_count] == '9' ||
-                buffer[buffer_char_count] == '0' ||
-                buffer[buffer_char_count] == ')' ||
-                buffer[buffer_char_count] == ',') {
-
-              if (buffer[buffer_char_count] == ',') {
-                if (comma_set == 1) {
-                  number_set_after_comma = 0;
-                  run_started = 0;
-                  comma_set = 0;
-                  memset(mul, 0, sizeof(mul));
-                  buffer_char_count += 1;
-                  continue;
-                }
-                comma_set = 1;
-              }
-
-              if (buffer[buffer_char_count] == ')') {
-                if (number_set_after_comma == 0) {
-                  number_set_after_comma = 0;
-                  comma_set = 0;
-                  run_started = 0;
-                  memset(mul, 0, sizeof(mul));
-                  buffer_char_count += 1;
-                  continue;
-                }
-                if (comma_set == 0) {
-                  number_set_after_comma = 0;
-                  comma_set = 0;
-                  run_started = 0;
-                  memset(mul, 0, sizeof(mul));
-                  buffer_char_count += 1;
-                  continue;
-                }
-
-                mul[8] = buffer[buffer_char_count];
-                for (int x = 0; x < MULTIPLIER_SIZE; x++) {
-                  if (mul[x] == '(') {
-                    parse_mul(&mul[x + 1]);
-                  }
-                }
-
-                number_set_after_comma = 0;
-                comma_set = 0;
-                run_started = 0;
-                memset(mul, 0, sizeof(mul));
-                buffer_char_count += 1;
-                continue;
-              }
-
-              if ((buffer[buffer_char_count] != ')' ||
-                   buffer[buffer_char_count] != ',') &&
-                  comma_set == 1) {
-                number_set_after_comma = 1;
-              }
-
-              mul[8] = buffer[buffer_char_count];
-              run_started += 1;
-            } else {
-              number_set_after_comma = 0;
-              comma_set = 0;
-              run_started = 0;
-              memset(mul, 0, sizeof(mul));
+            if (mul_lex_gen(buffer, &buffer_char_count, &comma_set,
+                            &number_set_after_comma, &run_started, mul, &result,
+                            8) == 0) {
+              continue;
             }
             break;
           case 9:
-            if (buffer[buffer_char_count] == '1' ||
-                buffer[buffer_char_count] == '2' ||
-                buffer[buffer_char_count] == '3' ||
-                buffer[buffer_char_count] == '4' ||
-                buffer[buffer_char_count] == '5' ||
-                buffer[buffer_char_count] == '6' ||
-                buffer[buffer_char_count] == '7' ||
-                buffer[buffer_char_count] == '8' ||
-                buffer[buffer_char_count] == '9' ||
-                buffer[buffer_char_count] == '0' ||
-                buffer[buffer_char_count] == ')' ||
-                buffer[buffer_char_count] == ',') {
-
-              if (buffer[buffer_char_count] == ',') {
-                if (comma_set == 1) {
-                  number_set_after_comma = 0;
-                  run_started = 0;
-                  comma_set = 0;
-                  memset(mul, 0, sizeof(mul));
-                  buffer_char_count += 1;
-                  continue;
-                }
-                comma_set = 1;
-              }
-
-              if (buffer[buffer_char_count] == ')') {
-                if (number_set_after_comma == 0) {
-                  number_set_after_comma = 0;
-                  comma_set = 0;
-                  run_started = 0;
-                  memset(mul, 0, sizeof(mul));
-                  buffer_char_count += 1;
-                  continue;
-                }
-                if (comma_set == 0) {
-                  number_set_after_comma = 0;
-                  comma_set = 0;
-                  run_started = 0;
-                  memset(mul, 0, sizeof(mul));
-                  buffer_char_count += 1;
-                  continue;
-                }
-
-                mul[9] = buffer[buffer_char_count];
-                for (int x = 0; x < MULTIPLIER_SIZE; x++) {
-                  if (mul[x] == '(') {
-                    parse_mul(&mul[x + 1]);
-                  }
-                }
-
-                number_set_after_comma = 0;
-                comma_set = 0;
-                run_started = 0;
-                memset(mul, 0, sizeof(mul));
-                buffer_char_count += 1;
-                continue;
-              }
-
-              if ((buffer[buffer_char_count] != ')' ||
-                   buffer[buffer_char_count] != ',') &&
-                  comma_set == 1) {
-                number_set_after_comma = 1;
-              }
-
-              mul[9] = buffer[buffer_char_count];
-              run_started += 1;
-            } else {
-              number_set_after_comma = 0;
-              comma_set = 0;
-              run_started = 0;
-              memset(mul, 0, sizeof(mul));
+            if (mul_lex_gen(buffer, &buffer_char_count, &comma_set,
+                            &number_set_after_comma, &run_started, mul, &result,
+                            9) == 0) {
+              continue;
             }
             break;
           case 10:
-            if (buffer[buffer_char_count] == '1' ||
-                buffer[buffer_char_count] == '2' ||
-                buffer[buffer_char_count] == '3' ||
-                buffer[buffer_char_count] == '4' ||
-                buffer[buffer_char_count] == '5' ||
-                buffer[buffer_char_count] == '6' ||
-                buffer[buffer_char_count] == '7' ||
-                buffer[buffer_char_count] == '8' ||
-                buffer[buffer_char_count] == '9' ||
-                buffer[buffer_char_count] == '0' ||
-                buffer[buffer_char_count] == ')' ||
-                buffer[buffer_char_count] == ',') {
-
-              if (buffer[buffer_char_count] == ',') {
-                if (comma_set == 1) {
-                  number_set_after_comma = 0;
-                  run_started = 0;
-                  comma_set = 0;
-                  memset(mul, 0, sizeof(mul));
-                  buffer_char_count += 1;
-                  continue;
-                }
-                comma_set = 1;
-              }
-
-              if (buffer[buffer_char_count] == ')') {
-                if (number_set_after_comma == 0) {
-                  number_set_after_comma = 0;
-                  comma_set = 0;
-                  run_started = 0;
-                  memset(mul, 0, sizeof(mul));
-                  buffer_char_count += 1;
-                  continue;
-                }
-                if (comma_set == 0) {
-                  number_set_after_comma = 0;
-                  comma_set = 0;
-                  run_started = 0;
-                  memset(mul, 0, sizeof(mul));
-                  buffer_char_count += 1;
-                  continue;
-                }
-
-                mul[10] = buffer[buffer_char_count];
-                for (int x = 0; x < MULTIPLIER_SIZE; x++) {
-                  if (mul[x] == '(') {
-                    parse_mul(&mul[x + 1]);
-                  }
-                }
-
-                number_set_after_comma = 0;
-                comma_set = 0;
-                run_started = 0;
-                memset(mul, 0, sizeof(mul));
-                buffer_char_count += 1;
-                continue;
-              }
-
-              if ((buffer[buffer_char_count] != ')' ||
-                   buffer[buffer_char_count] != ',') &&
-                  comma_set == 1) {
-                number_set_after_comma = 1;
-              }
-
-              mul[10] = buffer[buffer_char_count];
-              run_started += 1;
-            } else {
-              number_set_after_comma = 0;
-              comma_set = 0;
-              run_started = 0;
-              memset(mul, 0, sizeof(mul));
+            if (mul_lex_gen(buffer, &buffer_char_count, &comma_set,
+                            &number_set_after_comma, &run_started, mul, &result,
+                            10) == 0) {
+              continue;
             }
             break;
           case 11:
@@ -552,7 +274,7 @@ int main() {
 
               for (int x = 0; x < MULTIPLIER_SIZE; x++) {
                 if (mul[x] == '(') {
-                  parse_mul(&mul[x + 1]);
+                  result += parse_mul(&mul[x + 1]);
                 }
               }
 
@@ -574,10 +296,8 @@ int main() {
             memset(mul, 0, sizeof(mul));
           }
         }
-
         buffer_char_count += 1;
       }
-
       memset(buffer, 0, sizeof(buffer));
       char_count += BUFFER_SIZE;
     } else {
@@ -585,7 +305,7 @@ int main() {
     }
   }
 
+  printf("RESULT: %d\n\n", result);
   fclose(file);
-
   exit(EXIT_SUCCESS);
 }
