@@ -2,12 +2,12 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define BUFFER_SIZE 1024
+#define BUFFER_SIZE 2
 #define MULTIPLIER_SIZE 12
 
 void parse_mul(char *mul) {
-  char num1[3];
-  char num2[3];
+  char num1[4];
+  char num2[4];
 
   int nums_found = 0;
   int x = 0;
@@ -17,11 +17,12 @@ void parse_mul(char *mul) {
   while (nums_found != 1) {
     if (mul[x] == ',') {
       nums_found = 1;
+      num1[x] = '\0';
+      last_index = x + 1;
     } else {
       num1[x] = mul[x];
     }
     x++;
-    last_index = x;
   }
 
   nums_found = 0;
@@ -30,6 +31,7 @@ void parse_mul(char *mul) {
   // get num2
   while (nums_found != 1) {
     if (mul[last_index + x] == ')') {
+      num2[x] = '\0';
       nums_found = 1;
     } else {
       num2[x] = mul[last_index + x];
@@ -46,6 +48,10 @@ int main() {
   int char_count = 0;
   char buffer[BUFFER_SIZE];
   size_t buffer_size = sizeof(buffer) / sizeof(*buffer);
+  char mul[MULTIPLIER_SIZE];
+  int run_started = 0;
+  int comma_set = 0;
+  int number_set_after_comma = 0;
 
   memset(buffer, 0, sizeof(buffer));
 
@@ -56,13 +62,8 @@ int main() {
     return EXIT_FAILURE;
   }
 
-  char mul[MULTIPLIER_SIZE];
-  int run_started = 0;
-  int comma_set = 0;
-  int number_set_after_comma = 0;
-
   while (char_count < 19928) {
-    if (char_count + BUFFER_SIZE <= 19928 - BUFFER_SIZE) {
+    if (char_count + BUFFER_SIZE <= 19928) {
       size_t ret = fread(buffer, sizeof(*buffer), buffer_size, file);
 
       if (ret != buffer_size) {
@@ -578,7 +579,7 @@ int main() {
       }
 
       memset(buffer, 0, sizeof(buffer));
-      char_count += 1024;
+      char_count += BUFFER_SIZE;
     } else {
       break;
     }
