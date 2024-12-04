@@ -5,6 +5,41 @@
 #define BUFFER_SIZE 1024
 #define MULTIPLIER_SIZE 12
 
+void parse_mul(char *mul) {
+  char num1[3];
+  char num2[3];
+
+  int nums_found = 0;
+  int x = 0;
+  int last_index = 0;
+
+  // get num1
+  while (nums_found != 1) {
+    if (mul[x] == ',') {
+      nums_found = 1;
+    } else {
+      num1[x] = mul[x];
+    }
+    x++;
+    last_index = x;
+  }
+
+  nums_found = 0;
+  x = 0;
+
+  // get num2
+  while (nums_found != 1) {
+    if (mul[last_index + x] == ')') {
+      nums_found = 1;
+    } else {
+      num2[x] = mul[last_index + x];
+    }
+    x++;
+  }
+
+  printf("num1: %s, num2: %s\n\n", num1, num2);
+}
+
 int main() {
   printf("Hello aoc - Day 3\n\n");
 
@@ -168,10 +203,10 @@ int main() {
 
                 mul[6] = buffer[buffer_char_count];
                 for (int x = 0; x < MULTIPLIER_SIZE; x++) {
-                  printf("%c", mul[x]);
+                  if (mul[x] == '(') {
+                    parse_mul(&mul[x + 1]);
+                  }
                 }
-
-                printf("\n\n");
 
                 number_set_after_comma = 0;
                 comma_set = 0;
@@ -239,11 +274,14 @@ int main() {
                   buffer_char_count += 1;
                   continue;
                 }
+
                 mul[7] = buffer[buffer_char_count];
                 for (int x = 0; x < MULTIPLIER_SIZE; x++) {
-                  printf("%c", mul[x]);
+                  if (mul[x] == '(') {
+                    parse_mul(&mul[x + 1]);
+                  }
                 }
-                printf("\n\n");
+
                 number_set_after_comma = 0;
                 comma_set = 0;
                 run_started = 0;
@@ -310,11 +348,14 @@ int main() {
                   buffer_char_count += 1;
                   continue;
                 }
+
                 mul[8] = buffer[buffer_char_count];
                 for (int x = 0; x < MULTIPLIER_SIZE; x++) {
-                  printf("%c", mul[x]);
+                  if (mul[x] == '(') {
+                    parse_mul(&mul[x + 1]);
+                  }
                 }
-                printf("\n\n");
+
                 number_set_after_comma = 0;
                 comma_set = 0;
                 run_started = 0;
@@ -381,11 +422,14 @@ int main() {
                   buffer_char_count += 1;
                   continue;
                 }
+
                 mul[9] = buffer[buffer_char_count];
                 for (int x = 0; x < MULTIPLIER_SIZE; x++) {
-                  printf("%c", mul[x]);
+                  if (mul[x] == '(') {
+                    parse_mul(&mul[x + 1]);
+                  }
                 }
-                printf("\n\n");
+
                 number_set_after_comma = 0;
                 comma_set = 0;
                 run_started = 0;
@@ -452,11 +496,14 @@ int main() {
                   buffer_char_count += 1;
                   continue;
                 }
+
                 mul[10] = buffer[buffer_char_count];
                 for (int x = 0; x < MULTIPLIER_SIZE; x++) {
-                  printf("%c", mul[x]);
+                  if (mul[x] == '(') {
+                    parse_mul(&mul[x + 1]);
+                  }
                 }
-                printf("\n\n");
+
                 number_set_after_comma = 0;
                 comma_set = 0;
                 run_started = 0;
@@ -503,10 +550,10 @@ int main() {
               mul[11] = buffer[buffer_char_count];
 
               for (int x = 0; x < MULTIPLIER_SIZE; x++) {
-                printf("%c", mul[x]);
+                if (mul[x] == '(') {
+                  parse_mul(&mul[x + 1]);
+                }
               }
-
-              printf("\n\n");
 
               number_set_after_comma = 0;
               comma_set = 0;
