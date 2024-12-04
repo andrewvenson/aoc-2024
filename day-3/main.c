@@ -21,6 +21,11 @@ int main() {
     return EXIT_FAILURE;
   }
 
+  char mul[MULTIPLIER_SIZE];
+  int run_started = 0;
+  int comma_set = 0;
+  int number_set_after_comma = 0;
+
   while (char_count < 19928) {
     if (char_count + BUFFER_SIZE <= 19928 - BUFFER_SIZE) {
       size_t ret = fread(buffer, sizeof(*buffer), buffer_size, file);
@@ -31,9 +36,6 @@ int main() {
       }
 
       int buffer_char_count = 0;
-
-      char mul[MULTIPLIER_SIZE];
-      int run_started = 0;
 
       while (buffer_char_count != BUFFER_SIZE) {
         if (buffer[buffer_char_count] == 'm' && run_started == 0) {
@@ -47,6 +49,7 @@ int main() {
           switch (run_started) {
           case 1:
             if (buffer[buffer_char_count] != 'u') {
+              comma_set = 0;
               run_started = 0;
               memset(mul, 0, sizeof(mul));
             } else {
@@ -56,6 +59,7 @@ int main() {
             break;
           case 2:
             if (buffer[buffer_char_count] != 'l') {
+              comma_set = 0;
               run_started = 0;
               memset(mul, 0, sizeof(mul));
             } else {
@@ -65,54 +69,201 @@ int main() {
             break;
           case 3:
             if (buffer[buffer_char_count] != '(') {
+              comma_set = 0;
               run_started = 0;
               memset(mul, 0, sizeof(mul));
             } else {
-              mul[4] = '(';
+              mul[3] = '(';
               run_started += 1;
-              for (int x = 0; x < MULTIPLIER_SIZE; x++) {
-                printf("%c", mul[x]);
-              }
             }
-            printf("\n\n");
             break;
           case 4:
-            run_started = 0;
-            memset(mul, 0, sizeof(mul));
+            if (buffer[buffer_char_count] == '1' ||
+                buffer[buffer_char_count] == '2' ||
+                buffer[buffer_char_count] == '3' ||
+                buffer[buffer_char_count] == '4' ||
+                buffer[buffer_char_count] == '5' ||
+                buffer[buffer_char_count] == '6' ||
+                buffer[buffer_char_count] == '7' ||
+                buffer[buffer_char_count] == '8' ||
+                buffer[buffer_char_count] == '9' ||
+                buffer[buffer_char_count] == '0') {
+              mul[4] = buffer[buffer_char_count];
+              run_started += 1;
+            } else {
+              comma_set = 0;
+              run_started = 0;
+              memset(mul, 0, sizeof(mul));
+            }
             break;
           case 5:
-            run_started = 0;
-            memset(mul, 0, sizeof(mul));
+            if (buffer[buffer_char_count] == '1' ||
+                buffer[buffer_char_count] == '2' ||
+                buffer[buffer_char_count] == '3' ||
+                buffer[buffer_char_count] == '4' ||
+                buffer[buffer_char_count] == '5' ||
+                buffer[buffer_char_count] == '6' ||
+                buffer[buffer_char_count] == '7' ||
+                buffer[buffer_char_count] == '8' ||
+                buffer[buffer_char_count] == '9' ||
+                buffer[buffer_char_count] == '0' ||
+                buffer[buffer_char_count] == ',') {
+              if (buffer[buffer_char_count] == ',') {
+                comma_set = 1;
+              }
+              mul[5] = buffer[buffer_char_count];
+              run_started += 1;
+            } else {
+              comma_set = 0;
+              run_started = 0;
+              memset(mul, 0, sizeof(mul));
+            }
             break;
           case 6:
-            run_started = 0;
-            memset(mul, 0, sizeof(mul));
+            if (buffer[buffer_char_count] == '1' ||
+                buffer[buffer_char_count] == '2' ||
+                buffer[buffer_char_count] == '3' ||
+                buffer[buffer_char_count] == '4' ||
+                buffer[buffer_char_count] == '5' ||
+                buffer[buffer_char_count] == '6' ||
+                buffer[buffer_char_count] == '7' ||
+                buffer[buffer_char_count] == '8' ||
+                buffer[buffer_char_count] == '9' ||
+                buffer[buffer_char_count] == '0' ||
+                buffer[buffer_char_count] == ')' ||
+                buffer[buffer_char_count] == ',') {
+
+              if (buffer[buffer_char_count] == ',') {
+                if (comma_set == 1) {
+                  run_started = 0;
+                  comma_set = 0;
+                  memset(mul, 0, sizeof(mul));
+                  buffer_char_count += 1;
+                  continue;
+                }
+                run_started += 1;
+                mul[6] = buffer[buffer_char_count];
+                comma_set = 1;
+                buffer_char_count += 1;
+                continue;
+              }
+
+              if (buffer[buffer_char_count] == ')') {
+                if (comma_set == 0) {
+                  comma_set = 0;
+                  run_started = 0;
+                  memset(mul, 0, sizeof(mul));
+                  buffer_char_count += 1;
+                  continue;
+                }
+
+                mul[6] = buffer[buffer_char_count];
+                for (int x = 0; x < MULTIPLIER_SIZE; x++) {
+                  printf("%c", mul[x]);
+                }
+
+                printf("\n\n");
+
+                comma_set = 0;
+                run_started = 0;
+                memset(mul, 0, sizeof(mul));
+                buffer_char_count += 1;
+                continue;
+              }
+
+              mul[6] = buffer[buffer_char_count];
+              run_started += 1;
+            } else {
+              comma_set = 0;
+              run_started = 0;
+              memset(mul, 0, sizeof(mul));
+            }
             break;
           case 7:
-            run_started = 0;
-            memset(mul, 0, sizeof(mul));
+            if (buffer[buffer_char_count] == '1' ||
+                buffer[buffer_char_count] == '2' ||
+                buffer[buffer_char_count] == '3' ||
+                buffer[buffer_char_count] == '4' ||
+                buffer[buffer_char_count] == '5' ||
+                buffer[buffer_char_count] == '6' ||
+                buffer[buffer_char_count] == '7' ||
+                buffer[buffer_char_count] == '8' ||
+                buffer[buffer_char_count] == '9' ||
+                buffer[buffer_char_count] == '0' ||
+                buffer[buffer_char_count] == ')' ||
+                buffer[buffer_char_count] == ',') {
+
+              if (buffer[buffer_char_count] == ',') {
+                if (comma_set == 1) {
+                  run_started = 0;
+                  comma_set = 0;
+                  memset(mul, 0, sizeof(mul));
+                  buffer_char_count += 1;
+                  continue;
+                }
+                run_started += 1;
+                mul[6] = buffer[buffer_char_count];
+                comma_set = 1;
+                buffer_char_count += 1;
+                continue;
+              }
+
+              if (buffer[buffer_char_count] == ')') {
+                if (comma_set == 0) {
+                  comma_set = 0;
+                  run_started = 0;
+                  memset(mul, 0, sizeof(mul));
+                  buffer_char_count += 1;
+                  continue;
+                }
+
+                mul[7] = buffer[buffer_char_count];
+                for (int x = 0; x < MULTIPLIER_SIZE; x++) {
+                  printf("%c", mul[x]);
+                }
+
+                printf("\n\n");
+
+                comma_set = 0;
+                run_started = 0;
+                memset(mul, 0, sizeof(mul));
+                buffer_char_count += 1;
+                continue;
+              }
+
+            } else {
+              comma_set = 0;
+              run_started = 0;
+              memset(mul, 0, sizeof(mul));
+            }
             break;
           case 8:
+            comma_set = 0;
             run_started = 0;
             memset(mul, 0, sizeof(mul));
             break;
           case 9:
+            comma_set = 0;
             run_started = 0;
             memset(mul, 0, sizeof(mul));
             break;
           case 10:
+            comma_set = 0;
             run_started = 0;
             memset(mul, 0, sizeof(mul));
             break;
           case 11:
+            comma_set = 0;
             run_started = 0;
             memset(mul, 0, sizeof(mul));
             break;
           case 12:
+            comma_set = 0;
             run_started = 0;
             memset(mul, 0, sizeof(mul));
             break;
           default:
+            comma_set = 0;
             run_started = 0;
             memset(mul, 0, sizeof(mul));
           }
