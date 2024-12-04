@@ -2,8 +2,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define BUFFER_SIZE 2
+#define BUFFER_SIZE 19928
 #define MULTIPLIER_SIZE 12
+#define DO_PROCESS_SIZE 7
 
 int parse_mul(char *mul) {
   char num1[4];
@@ -36,8 +37,57 @@ int parse_mul(char *mul) {
   }
   int number1 = atoi(num1);
   int number2 = atoi(num2);
-  printf("num1: %d, num2: %d\n\n", number1, number2);
   return number1 * number2;
+}
+
+int should_process(char *process, int *do_process) {
+  for (int x = 0; x < DO_PROCESS_SIZE; x++) {
+    switch (x) {
+    case 0:
+      if (process[x] != 'd') {
+        return 1;
+      }
+      break;
+    case 1:
+      if (process[x] != 'o') {
+        return 1;
+      }
+      break;
+    case 2:
+      if (process[x] != 'n' && process[x] != '(') {
+        return 1;
+      }
+      break;
+    case 3:
+      if (process[x] != '\'' && process[x] != ')') {
+        return 1;
+      }
+      if (process[x] == ')') {
+        *do_process = 1;
+        return 0;
+      }
+      break;
+    case 4:
+      if (process[x] != 't') {
+        return 1;
+      }
+      break;
+    case 5:
+      if (process[x] != '(') {
+        return 1;
+      }
+      break;
+    case 6:
+      if (process[x] == ')') {
+        *do_process = 0;
+        return 0;
+      }
+      break;
+    default:
+      return 1;
+    }
+  }
+  return 1;
 }
 
 void reset_vals(int *number_set_after_comma, int *comma_set, int *run_started,
@@ -131,6 +181,7 @@ int main() {
   int comma_set = 0;
   int number_set_after_comma = 0;
   int result = 0;
+  int do_process = 1;
 
   memset(buffer, 0, sizeof(buffer));
 
@@ -153,12 +204,23 @@ int main() {
       int buffer_char_count = 0;
 
       while (buffer_char_count != BUFFER_SIZE) {
+        if (buffer[buffer_char_count] == 'd') {
+          should_process(&buffer[buffer_char_count], &do_process);
+        }
+
+        if (do_process == 0) {
+          reset_vals(&number_set_after_comma, &comma_set, &run_started, mul);
+          buffer_char_count += 1;
+          continue;
+        }
+
         if (buffer[buffer_char_count] == 'm' && run_started == 0) {
           mul[0] = 'm';
           run_started += 1;
           buffer_char_count += 1;
           continue;
         }
+
         if (run_started > 0) {
           switch (run_started) {
           case 1:
