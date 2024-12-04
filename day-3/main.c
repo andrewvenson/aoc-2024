@@ -101,18 +101,18 @@ int should_process(char *process, int *do_process) {
 }
 
 void reset_vals(int *number_set_after_comma, int *comma_set, int *run_started,
-                char *mul) {
+                char *mul, size_t mul_size) {
   *number_set_after_comma = 0;
   *comma_set = 0;
   *run_started = 0;
-  memset(mul, 0, sizeof(*mul));
+  memset(mul, 0, mul_size);
 }
 
 void mul_delim_gen(char *buffer, int *buffer_char_count, int *comma_set,
                    int *run_started, char *mul, int *number_set_after_comma,
-                   char letter, int index) {
+                   char letter, int index, size_t mul_size) {
   if (buffer[*buffer_char_count] != letter) {
-    reset_vals(number_set_after_comma, comma_set, run_started, mul);
+    reset_vals(number_set_after_comma, comma_set, run_started, mul, mul_size);
   } else {
     mul[index] = letter;
     *run_started += 1;
@@ -121,15 +121,16 @@ void mul_delim_gen(char *buffer, int *buffer_char_count, int *comma_set,
 
 int ending_delim_check(char *buffer, int *buffer_char_count,
                        int *number_set_after_comma, int *comma_set,
-                       int *run_started, char *mul, int *result, int index) {
+                       int *run_started, char *mul, int *result, int index,
+                       size_t mul_size) {
   if (buffer[*buffer_char_count] == ')') {
     if (*number_set_after_comma == 0) {
-      reset_vals(number_set_after_comma, comma_set, run_started, mul);
+      reset_vals(number_set_after_comma, comma_set, run_started, mul, mul_size);
       *buffer_char_count += 1;
       return 0;
     }
     if (*comma_set == 0) {
-      reset_vals(number_set_after_comma, comma_set, run_started, mul);
+      reset_vals(number_set_after_comma, comma_set, run_started, mul, mul_size);
       *buffer_char_count += 1;
       return 0;
     }
@@ -139,7 +140,7 @@ int ending_delim_check(char *buffer, int *buffer_char_count,
         *result += parse_mul(&mul[x + 1]);
       }
     }
-    reset_vals(number_set_after_comma, comma_set, run_started, mul);
+    reset_vals(number_set_after_comma, comma_set, run_started, mul, mul_size);
     *buffer_char_count += 1;
     return 0;
   }
@@ -148,19 +149,21 @@ int ending_delim_check(char *buffer, int *buffer_char_count,
 
 int mul_lex_gen(char *buffer, int *buffer_char_count, int *comma_set,
                 int *number_set_after_comma, int *run_started, char *mul,
-                int *result, int index) {
+                int *result, int index, size_t mul_size) {
   if (char_is_num(buffer[*buffer_char_count]) == 1 ||
       buffer[*buffer_char_count] == ')' || buffer[*buffer_char_count] == ',') {
     if (buffer[*buffer_char_count] == ',') {
       if (*comma_set == 1) {
-        reset_vals(number_set_after_comma, comma_set, run_started, mul);
+        reset_vals(number_set_after_comma, comma_set, run_started, mul,
+                   mul_size);
         *buffer_char_count += 1;
         return 0;
       }
       *comma_set = 1;
     }
     if (ending_delim_check(buffer, buffer_char_count, number_set_after_comma,
-                           comma_set, run_started, mul, result, index) == 0) {
+                           comma_set, run_started, mul, result, index,
+                           mul_size) == 0) {
       return 0;
     }
     if ((buffer[*buffer_char_count] != ')' ||
@@ -172,82 +175,66 @@ int mul_lex_gen(char *buffer, int *buffer_char_count, int *comma_set,
     *run_started += 1;
     return 1;
   }
-  reset_vals(number_set_after_comma, comma_set, run_started, mul);
+  reset_vals(number_set_after_comma, comma_set, run_started, mul, mul_size);
   return 0;
 }
 
-int main() {
-  printf("Hello aoc - Day 3\n\n");
-
+void process_characters(FILE *file, char *buffer, int *result,
+                        size_t buffer_arr_size) {
   int char_count = 0;
-  char buffer[BUFFER_SIZE];
-  size_t buffer_size = sizeof(buffer) / sizeof(*buffer);
+  size_t buffer_size = buffer_arr_size / sizeof(buffer[0]);
   char mul[MULTIPLIER_SIZE];
   int run_started = 0;
   int comma_set = 0;
   int number_set_after_comma = 0;
-  int result = 0;
   int do_process = 1;
+  memset(mul, 0, sizeof(mul));
 
-  memset(buffer, 0, sizeof(buffer));
-
-  FILE *file = fopen("multiplier.txt", "r");
-
-  if (!file) {
-    perror("An error occurred during opening file");
-    return EXIT_FAILURE;
-  }
-
-  while (char_count < 19928) {
-    if (char_count + BUFFER_SIZE <= 19928) {
+  while (char_count < BUFFER_SIZE) {
+    if (char_count + BUFFER_SIZE <= BUFFER_SIZE) {
       size_t ret = fread(buffer, sizeof(*buffer), buffer_size, file);
-
       if (ret != buffer_size) {
         fprintf(stderr, "fread failed: %zu\n", ret);
         exit(EXIT_FAILURE);
       }
-
       int buffer_char_count = 0;
-
       while (buffer_char_count != BUFFER_SIZE) {
         if (buffer[buffer_char_count] == 'd') {
           should_process(&buffer[buffer_char_count], &do_process);
         }
-
         if (do_process == 0) {
-          reset_vals(&number_set_after_comma, &comma_set, &run_started, mul);
+          reset_vals(&number_set_after_comma, &comma_set, &run_started, mul,
+                     sizeof(mul));
           buffer_char_count += 1;
           continue;
         }
-
         if (buffer[buffer_char_count] == 'm' && run_started == 0) {
           mul[0] = 'm';
           run_started += 1;
           buffer_char_count += 1;
           continue;
         }
-
         if (run_started > 0) {
           switch (run_started) {
           case 1:
             mul_delim_gen(buffer, &buffer_char_count, &comma_set, &run_started,
-                          mul, &number_set_after_comma, 'u', 1);
+                          mul, &number_set_after_comma, 'u', 1, sizeof(mul));
             break;
           case 2:
             mul_delim_gen(buffer, &buffer_char_count, &comma_set, &run_started,
-                          mul, &number_set_after_comma, 'l', 2);
+                          mul, &number_set_after_comma, 'l', 2, sizeof(mul));
             break;
           case 3:
             mul_delim_gen(buffer, &buffer_char_count, &comma_set, &run_started,
-                          mul, &number_set_after_comma, '(', 3);
+                          mul, &number_set_after_comma, '(', 3, sizeof(mul));
             break;
           case 4:
             if (char_is_num(buffer[buffer_char_count]) == 1) {
               mul[4] = buffer[buffer_char_count];
               run_started += 1;
             } else {
-              reset_vals(&number_set_after_comma, &comma_set, &run_started,
-                         mul);
+              reset_vals(&number_set_after_comma, &comma_set, &run_started, mul,
+                         sizeof(mul));
             }
             break;
           case 5:
@@ -259,42 +246,42 @@ int main() {
               mul[5] = buffer[buffer_char_count];
               run_started += 1;
             } else {
-              reset_vals(&number_set_after_comma, &comma_set, &run_started,
-                         mul);
+              reset_vals(&number_set_after_comma, &comma_set, &run_started, mul,
+                         sizeof(mul));
             }
             break;
           case 6:
             if (mul_lex_gen(buffer, &buffer_char_count, &comma_set,
-                            &number_set_after_comma, &run_started, mul, &result,
-                            6) == 0) {
+                            &number_set_after_comma, &run_started, mul, result,
+                            6, sizeof(mul)) == 0) {
               continue;
             }
             break;
           case 7:
             if (mul_lex_gen(buffer, &buffer_char_count, &comma_set,
-                            &number_set_after_comma, &run_started, mul, &result,
-                            7) == 0) {
+                            &number_set_after_comma, &run_started, mul, result,
+                            7, sizeof(mul)) == 0) {
               continue;
             }
             break;
           case 8:
             if (mul_lex_gen(buffer, &buffer_char_count, &comma_set,
-                            &number_set_after_comma, &run_started, mul, &result,
-                            8) == 0) {
+                            &number_set_after_comma, &run_started, mul, result,
+                            8, sizeof(mul)) == 0) {
               continue;
             }
             break;
           case 9:
             if (mul_lex_gen(buffer, &buffer_char_count, &comma_set,
-                            &number_set_after_comma, &run_started, mul, &result,
-                            9) == 0) {
+                            &number_set_after_comma, &run_started, mul, result,
+                            9, sizeof(mul)) == 0) {
               continue;
             }
             break;
           case 10:
             if (mul_lex_gen(buffer, &buffer_char_count, &comma_set,
-                            &number_set_after_comma, &run_started, mul, &result,
-                            10) == 0) {
+                            &number_set_after_comma, &run_started, mul, result,
+                            10, sizeof(mul)) == 0) {
               continue;
             }
             break;
@@ -302,27 +289,42 @@ int main() {
             if (buffer[buffer_char_count] == ')') {
               if (ending_delim_check(buffer, &buffer_char_count,
                                      &number_set_after_comma, &comma_set,
-                                     &run_started, mul, &result, 11) == 0) {
+                                     &run_started, mul, result, 11,
+                                     sizeof(mul)) == 0) {
                 continue;
               }
             } else {
-              reset_vals(&number_set_after_comma, &comma_set, &run_started,
-                         mul);
+              reset_vals(&number_set_after_comma, &comma_set, &run_started, mul,
+                         sizeof(mul));
             }
             break;
           default:
-            reset_vals(&number_set_after_comma, &comma_set, &run_started, mul);
+            reset_vals(&number_set_after_comma, &comma_set, &run_started, mul,
+                       sizeof(mul));
           }
         }
         buffer_char_count += 1;
       }
-      memset(buffer, 0, sizeof(buffer));
+      memset(buffer, 0, buffer_arr_size);
       char_count += BUFFER_SIZE;
     } else {
       break;
     }
   }
+}
 
+int main() {
+  printf("Hello aoc - Day 3\n\n");
+  char buffer[BUFFER_SIZE];
+  int result = 0;
+  memset(buffer, 0, sizeof(buffer));
+
+  FILE *file = fopen("multiplier.txt", "r");
+  if (!file) {
+    perror("An error occurred during opening file");
+    return EXIT_FAILURE;
+  }
+  process_characters(file, buffer, &result, sizeof(buffer));
   printf("RESULT: %d\n\n", result);
   fclose(file);
   exit(EXIT_SUCCESS);
