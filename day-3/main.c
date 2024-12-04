@@ -6,6 +6,16 @@
 #define MULTIPLIER_SIZE 12
 #define DO_PROCESS_SIZE 7
 
+int char_is_num(char character) {
+  if (character == '1' || character == '2' || character == '3' ||
+      character == '4' || character == '5' || character == '6' ||
+      character == '7' || character == '8' || character == '9' ||
+      character == '0') {
+    return 1;
+  }
+  return 0;
+}
+
 int parse_mul(char *mul) {
   char num1[4];
   char num2[4];
@@ -139,11 +149,7 @@ int ending_delim_check(char *buffer, int *buffer_char_count,
 int mul_lex_gen(char *buffer, int *buffer_char_count, int *comma_set,
                 int *number_set_after_comma, int *run_started, char *mul,
                 int *result, int index) {
-  if (buffer[*buffer_char_count] == '1' || buffer[*buffer_char_count] == '2' ||
-      buffer[*buffer_char_count] == '3' || buffer[*buffer_char_count] == '4' ||
-      buffer[*buffer_char_count] == '5' || buffer[*buffer_char_count] == '6' ||
-      buffer[*buffer_char_count] == '7' || buffer[*buffer_char_count] == '8' ||
-      buffer[*buffer_char_count] == '9' || buffer[*buffer_char_count] == '0' ||
+  if (char_is_num(buffer[*buffer_char_count]) == 1 ||
       buffer[*buffer_char_count] == ')' || buffer[*buffer_char_count] == ',') {
     if (buffer[*buffer_char_count] == ',') {
       if (*comma_set == 1) {
@@ -236,16 +242,7 @@ int main() {
                           mul, &number_set_after_comma, '(', 3);
             break;
           case 4:
-            if (buffer[buffer_char_count] == '1' ||
-                buffer[buffer_char_count] == '2' ||
-                buffer[buffer_char_count] == '3' ||
-                buffer[buffer_char_count] == '4' ||
-                buffer[buffer_char_count] == '5' ||
-                buffer[buffer_char_count] == '6' ||
-                buffer[buffer_char_count] == '7' ||
-                buffer[buffer_char_count] == '8' ||
-                buffer[buffer_char_count] == '9' ||
-                buffer[buffer_char_count] == '0') {
+            if (char_is_num(buffer[buffer_char_count]) == 1) {
               mul[4] = buffer[buffer_char_count];
               run_started += 1;
             } else {
@@ -254,16 +251,7 @@ int main() {
             }
             break;
           case 5:
-            if (buffer[buffer_char_count] == '1' ||
-                buffer[buffer_char_count] == '2' ||
-                buffer[buffer_char_count] == '3' ||
-                buffer[buffer_char_count] == '4' ||
-                buffer[buffer_char_count] == '5' ||
-                buffer[buffer_char_count] == '6' ||
-                buffer[buffer_char_count] == '7' ||
-                buffer[buffer_char_count] == '8' ||
-                buffer[buffer_char_count] == '9' ||
-                buffer[buffer_char_count] == '0' ||
+            if (char_is_num(buffer[buffer_char_count]) == 1 ||
                 buffer[buffer_char_count] == ',') {
               if (buffer[buffer_char_count] == ',') {
                 comma_set = 1;
