@@ -227,7 +227,6 @@ int main() {
       size_t ret =
           fread(file_buffer_read, sizeof(*file_buffer_read),
                 sizeof(file_buffer_read) / sizeof(*file_buffer_read), file);
-
       if (ret != FILE_BUFFER_READ) {
         printf("fread ERROR!\n");
         exit(EXIT_FAILURE);
@@ -238,9 +237,9 @@ int main() {
 
   memset(file_buffer_read, 0, sizeof(file_buffer_read));
 
-  // process_pagans(buffer, &occ_found, 0, 0, 1);
+  // process_pagans(buffer, &occ_found, 0, 0);
   // turn_buffer(buffer, turned_buffer);
-  // process_pagans(turned_buffer, &occ_found, 0, 0, 1);
+  // process_pagans(turned_buffer, &occ_found, 0, 0);
   process_pagans(buffer, &occ_found, 0, 1);
 
   printf("Found: %d\n\n", occ_found);
