@@ -2,13 +2,12 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define BUFFER_SIZE 140
+#define BUFFER_SIZE 141
 #define FILE_BUFFER_READ 1
 #define XMAS_SIZE 4
 
 int is_xmas_horiz(char *x, int *occ_found) {
   char prev_letter;
-
   for (int i = 0; i < XMAS_SIZE; i++) {
     switch (i) {
     case 0:
@@ -63,9 +62,31 @@ int is_xmas_horiz(char *x, int *occ_found) {
   return 0;
 }
 
+void process_pagans(char buffer[BUFFER_SIZE][BUFFER_SIZE], int *occ_found) {
+  for (int x = 0; x < BUFFER_SIZE - 1; x++) {
+    for (int y = 0; y < BUFFER_SIZE; y++) {
+      is_xmas_horiz(&buffer[x][y], occ_found);
+    }
+  }
+}
+
+void turn_buffer(char buffer[BUFFER_SIZE][BUFFER_SIZE],
+                 char turned_buffer[BUFFER_SIZE][BUFFER_SIZE]) {
+  for (int x = 0; x < BUFFER_SIZE - 1; x++) {
+    for (int y = 0; y < BUFFER_SIZE; y++) {
+      if (y == BUFFER_SIZE - 1) {
+        turned_buffer[x][y] = '\n';
+      } else {
+        turned_buffer[x][y] = buffer[BUFFER_SIZE - (2 + y)][x];
+      }
+    }
+  }
+}
+
 int main() {
   printf("Hello AoC - Day 4\n\n");
   char buffer[BUFFER_SIZE][BUFFER_SIZE];
+  char turned_buffer[BUFFER_SIZE][BUFFER_SIZE];
   char file_buffer_read[FILE_BUFFER_READ];
   int occ_found = 0;
 
@@ -80,29 +101,28 @@ int main() {
     return EXIT_FAILURE;
   }
 
-  for (int x = 0; x < BUFFER_SIZE; x++) {
+  for (int x = 0; x < BUFFER_SIZE - 1; x++) {
     for (int y = 0; y < BUFFER_SIZE; y++) {
       memset(file_buffer_read, 0, sizeof(file_buffer_read));
-
       size_t ret =
           fread(file_buffer_read, sizeof(*file_buffer_read),
                 sizeof(file_buffer_read) / sizeof(*file_buffer_read), file);
 
       if (ret != FILE_BUFFER_READ) {
+        printf("fread ERROR!\n");
         exit(EXIT_FAILURE);
       }
       buffer[x][y] = file_buffer_read[0];
     }
   }
 
-  for (int x = 0; x < BUFFER_SIZE; x++) {
-    for (int y = 0; y < BUFFER_SIZE; y++) {
-      is_xmas_horiz(&buffer[x][y], &occ_found);
-    }
-  }
+  memset(file_buffer_read, 0, sizeof(file_buffer_read));
+
+  process_pagans(buffer, &occ_found);
+  turn_buffer(buffer, turned_buffer);
+  process_pagans(turned_buffer, &occ_found);
 
   printf("Found: %d\n\n", occ_found);
-
   fclose(file);
   exit(EXIT_SUCCESS);
 }
