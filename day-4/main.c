@@ -6,7 +6,62 @@
 #define FILE_BUFFER_READ 1
 #define XMAS_SIZE 4
 
-int is_xmas_horiz(char *x, int *occ_found) {
+void is_pagan_diag(char pagan[BUFFER_SIZE][BUFFER_SIZE], int *occ_found,
+                   int x_c, int y_c) {
+  // search diagonal down right
+  if (x_c <= BUFFER_SIZE - 5 && y_c <= BUFFER_SIZE - 5) {
+    if (pagan[x_c][y_c] == 'X') {
+      if (pagan[x_c + 1][y_c + 1] == 'M') {
+        if (pagan[x_c + 2][y_c + 2] == 'A') {
+          if (pagan[x_c + 3][y_c + 3] == 'S') {
+            *occ_found += 1;
+          }
+        }
+      }
+    }
+  }
+
+  // search diagonal down left
+  if (x_c <= BUFFER_SIZE - 5 && y_c >= 3) {
+    if (pagan[x_c][y_c] == 'X') {
+      if (pagan[x_c + 1][y_c - 1] == 'M') {
+        if (pagan[x_c + 2][y_c - 2] == 'A') {
+          if (pagan[x_c + 3][y_c - 3] == 'S') {
+            *occ_found += 1;
+          }
+        }
+      }
+    }
+  }
+
+  // search diagonal up left
+  if (x_c >= 3 && y_c >= 3) {
+    if (pagan[x_c][y_c] == 'X') {
+      if (pagan[x_c - 1][y_c - 1] == 'M') {
+        if (pagan[x_c - 2][y_c - 2] == 'A') {
+          if (pagan[x_c - 3][y_c - 3] == 'S') {
+            *occ_found += 1;
+          }
+        }
+      }
+    }
+  }
+
+  // search diagonal up right
+  if (x_c >= 3 && y_c <= BUFFER_SIZE - 5) {
+    if (pagan[x_c][y_c] == 'X') {
+      if (pagan[x_c - 1][y_c + 1] == 'M') {
+        if (pagan[x_c - 2][y_c + 2] == 'A') {
+          if (pagan[x_c - 3][y_c + 3] == 'S') {
+            *occ_found += 1;
+          }
+        }
+      }
+    }
+  }
+}
+
+int is_pagan_horiz(char *x, int *occ_found) {
   char prev_letter;
   for (int i = 0; i < XMAS_SIZE; i++) {
     switch (i) {
@@ -62,10 +117,15 @@ int is_xmas_horiz(char *x, int *occ_found) {
   return 0;
 }
 
-void process_pagans(char buffer[BUFFER_SIZE][BUFFER_SIZE], int *occ_found) {
+void process_pagans(char buffer[BUFFER_SIZE][BUFFER_SIZE], int *occ_found,
+                    int diag) {
   for (int x = 0; x < BUFFER_SIZE - 1; x++) {
     for (int y = 0; y < BUFFER_SIZE; y++) {
-      is_xmas_horiz(&buffer[x][y], occ_found);
+      if (diag == 1) {
+        is_pagan_diag(buffer, occ_found, x, y);
+      } else {
+        is_pagan_horiz(&buffer[x][y], occ_found);
+      }
     }
   }
 }
@@ -118,9 +178,10 @@ int main() {
 
   memset(file_buffer_read, 0, sizeof(file_buffer_read));
 
-  process_pagans(buffer, &occ_found);
+  process_pagans(buffer, &occ_found, 0);
   turn_buffer(buffer, turned_buffer);
-  process_pagans(turned_buffer, &occ_found);
+  process_pagans(turned_buffer, &occ_found, 0);
+  process_pagans(turned_buffer, &occ_found, 1);
 
   printf("Found: %d\n\n", occ_found);
   fclose(file);
